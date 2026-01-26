@@ -1,0 +1,147 @@
+
+data: 24/01/2026
+Douglas
+
+Exemplos da iA - gemini / copilot , para rodar no Arduino-IDE 2.3.7
+
+1) Exemplo completo: Bluetooth Serial no ESP32 , usando bluetooth do tipo SPP – Serial Port Profile
+
+#include "BluetoothSerial.h"
+
+BluetoothSerial SerialBT;
+
+void setup() {
+  Serial.begin(115200);              // Monitor Serial
+  SerialBT.begin("ESP32_BT");        // Nome que aparecerá no Bluetooth
+  Serial.println("Bluetooth iniciado. Procure por 'ESP32_BT' no seu iPhone.");
+}
+
+void loop() {
+  // Se receber dados do Bluetooth, mostra no Serial Monitor
+  if (SerialBT.available()) {
+    char incomingChar = SerialBT.read();
+    Serial.print("Recebido via BT: ");
+    Serial.println(incomingChar);
+  }
+
+  // Se digitar algo no Serial Monitor, envia para o Bluetooth
+  if (Serial.available()) {
+    char outgoingChar = Serial.read();
+    SerialBT.write(outgoingChar);
+    Serial.print("Enviado via BT: ");
+    Serial.println(outgoingChar);
+  }
+}
+
+#COMO USAR??
+- carregue o código no ESP32 pela Arduino IDE.
+- Abra o Serial Monitor (115200 baud).
+- No iPhone, abra um app de terminal Bluetooth e conecte ao dispositivo chamado ESP32_BT.
+- Agora:
+- Se você digitar algo no Serial Monitor, o ESP32 envia para o iPhone.
+- Se você digitar algo no app do iPhone, o ESP32 mostra no Serial Monitor
+
+
+
+
+
+
+#---------------------------------------------------------------------------------------------------
+
+2) Exemplo completo: Bluetooth Serial no ESP32 modelo BLE echo, mais compatível com iphones
+
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+BLEServer* pServer = NULL;
+BLECharacteristic* pCharacteristic = NULL;
+
+bool deviceConnected = false;
+
+// UUIDs (pode gerar outros se quiser)
+#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
+#define CHARACTERISTIC_UUID "abcd1234-ab12-cd34-ef56-1234567890ab"
+
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnect(BLEServer* pServer) {
+      deviceConnected = true;
+      Serial.println("Dispositivo conectado!");
+    };
+
+    void onDisconnect(BLEServer* pServer) {
+      deviceConnected = false;
+      Serial.println("Dispositivo desconectado!");
+    }
+};
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic* pCharacteristic) {
+      std::string rxValue = pCharacteristic->getValue();
+      if (rxValue.length() > 0) {
+        Serial.print("Recebido via BLE: ");
+        Serial.println(rxValue.c_str());
+
+        // Ecoa de volta para o cliente
+        pCharacteristic->setValue("Echo: " + rxValue);
+        pCharacteristic->notify();
+      }
+    }
+};
+
+void setup() {
+  Serial.begin(115200);
+
+  // Inicializa BLE
+  BLEDevice::init("ESP32_BLE"); // Nome visível no iPhone
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  // Cria serviço
+  BLEService* pService = pServer->createService(SERVICE_UUID);
+
+  // Cria característica
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_READ   |
+                      BLECharacteristic::PROPERTY_WRITE  |
+                      BLECharacteristic::PROPERTY_NOTIFY |
+                      BLECharacteristic::PROPERTY_INDICATE
+                    );
+
+  pCharacteristic->addDescriptor(new BLE2902());
+  pCharacteristic->setCallbacks(new MyCallbacks());
+
+  // Inicia serviço
+  pService->start();
+
+  // Inicia advertising
+  pServer->getAdvertising()->start();
+  Serial.println("ESP32 BLE pronto! Procure por 'ESP32_BLE' no iPhone.");
+}
+
+void loop() {
+  // Aqui você pode enviar dados periódicos se quiser
+  if (deviceConnected) {
+    pCharacteristic->setValue("Ping do ESP32");
+    pCharacteristic->notify();
+    delay(5000);
+  }
+}
+
+
+
+#COMO USAR??
+
+Carregue o código no ESP32.
+2. 	Abra o Serial Monitor (115200 baud).
+3. 	No iPhone, abra o app LightBlue.
+4. 	Conecte ao dispositivo chamado ESP32_BLE.
+5. 	Você verá o serviço e a característica.
+• 	Escreva algo na característica → aparece no Serial Monitor e o ESP32 responde com “Echo: ...”.
+• 	O ESP32 também envia mensagens periódicas (“Ping do ESP32”).
+
+
+
+#---------------------------------------------------------------------------------------------------
