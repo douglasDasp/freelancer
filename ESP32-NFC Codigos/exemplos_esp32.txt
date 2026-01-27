@@ -83,4 +83,66 @@ void setup() {
 void loop(){}
 
 
+?----------------------------------------------------------------
+?----------------------------------------------------------------
+?----------------------------------------------------------------
+##TESTE SERIAL
+#include <PN532_HSU.h>
+#include <PN532.h>
+
+// No ESP32 podemos usar Serial2 (pinos padrão: RX=16, TX=17)
+// Ajuste conforme seu módulo PN532 estiver conectado
+PN532_HSU pn532hsu(Serial2);
+PN532 nfc(pn532hsu);
+
+void setup(void) {
+  Serial.begin(115200);
+  Serial.println("Teste PN532 via UART");
+
+  // Inicializa UART2 com os pinos escolhidos
+  Serial2.begin(115200, SERIAL_8N1, 16, 17); 
+  // RX=16, TX=17 → ajuste se necessário
+
+  nfc.begin();
+
+  uint32_t versiondata = nfc.getFirmwareVersion();
+  if (!versiondata) {
+    Serial.println("Não encontrei PN532 :(");
+    while (1); // trava aqui se não detectar
+  }
+
+  // Mostra versão do chip
+  Serial.print("Encontrado PN532, chip: ");
+  Serial.println((versiondata >> 24) & 0xFF, HEX);
+  Serial.print("Versão firmware: ");
+  Serial.print((versiondata >> 16) & 0xFF, DEC);
+  Serial.print('.');
+  Serial.println((versiondata >> 8) & 0xFF, DEC);
+
+  // Configura para leitura de tags
+  nfc.SAMConfig();
+  Serial.println("Esperando por uma tag NFC...");
+}
+
+void loop(void) {
+  uint8_t success;
+  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 }; // buffer para UID
+  uint8_t uidLength;
+
+  // Tenta ler uma tag
+  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+
+  if (success) {
+    Serial.println("Tag detectada!");
+    Serial.print("UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
+    Serial.print("UID Value: ");
+    for (uint8_t i=0; i < uidLength; i++) {
+      Serial.print(" 0x");Serial.print(uid[i], HEX);
+    }
+    Serial.println("");
+    delay(1000);
+  }
+}
+
+
 
