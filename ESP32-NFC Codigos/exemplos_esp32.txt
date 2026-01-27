@@ -53,3 +53,34 @@ void loop(void) {
 }
 
 
+# teste pra verificar monitor serial
+// void setup() {
+  // Serial.begin(115200);
+  // Serial.println("Teste Serial OK");
+// }
+// void loop() {
+  // Serial.println("Loop rodando...");
+  // delay(1000);
+// }
+// 
+
+
+
+# teste pra verificar o i2C
+#include <Wire.h>
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(21,22); // ou tente (4,5) (21,22)
+  Serial.println("Scanning I2C bus...");
+  for(byte addr=1; addr<127; addr++) {
+    Wire.beginTransmission(addr);
+    if(Wire.endTransmission()==0) {
+      Serial.print("Found device at 0x");
+      Serial.println(addr, HEX);
+    }
+  }
+}
+void loop(){}
+
+
+
