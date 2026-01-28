@@ -1,3 +1,15 @@
+/*
+  Software de teste de Registro de ID de TAG e transferência por Bluetooth
+  
+  Hardware: ESP32-DevKit REV01 ; Modulo NFC PN532 REV03
+
+  Data: 28/01/2026
+  Autor: Douglas Poubel
+  Versão: 1.0.0
+
+*/
+
+
 #include <Wire.h>
 
 //NFC
@@ -40,6 +52,10 @@ class MyServerCallbacks: public BLEServerCallbacks {
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
       Serial.println("Dispositivo desconectado!");
+      delay(500);
+      //pServer->getAdvertising()->start();
+      //Serial.println("ESP32 BLE pronto! Procure por 'ESP32_PROTORIPO' no iPhone.");
+
     }
 };
 
@@ -62,15 +78,11 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 
 
 
-
-
-
-
 void setup(void) {
   Serial.begin(115200);   // velocidade maior para ESP32
   //inicia NFC
   Serial.println("NDEF Reader - ESP32");
-  Wire.begin(4, 5);     // garante que SDA=21, SCL=22
+  Wire.begin(4, 5);     // garante que SDA=21 ou 4, SCL=22 ou 5
   nfc.begin();
   //----------------------------------
 
@@ -101,7 +113,7 @@ void setup(void) {
 
   // Inicia advertising
   pServer->getAdvertising()->start();
-  Serial.println("ESP32 BLE pronto! Procure por 'ESP32_BLE' no iPhone.");
+  Serial.println("ESP32 BLE pronto! Procure por 'ESP32_PROTORIPO' no iPhone.");
 
 
 
@@ -109,14 +121,19 @@ void setup(void) {
 }
 
 void loop(void) {
-    Serial.println("\nScan a NFC tag\n");
+    Serial.println("\Lendo... NFC tag\n");
+    String idTag;
     if (nfc.tagPresent()) 
     {
       NfcTag tag = nfc.read(); //COLOCAR AQUI A VARIAVEL QUE VAI IR NO BLUE
-      char* tag_id[4] = tag.print();
+      //tag.print();// imprime UID da tag ; Tipo da tag como Mifrare Classic ; COnteudo NDEF como mensagens gravadas
+      idTag = tag.getUidString();
+      Serial.print("ID da TAG detectada: ");
+      Serial.println(idTag); 
+
     }else
         {
-          Serial.println("NDEF Reader ERROR");
+          Serial.println("Reader ERROR");
           for(int i = 0; i < 10; i++)
           {
              digitalWrite(GPIO2_OUT, HIGH);
@@ -132,20 +149,27 @@ void loop(void) {
     {
       //A VARIAVEL DO TAG VAI ENTRAR NO LUGAR DO "Ping do ESP32"
       digitalWrite(GPIO2_OUT, HIGH); //acende quando BLUE esta ON
+      delay(100);
       pCharacteristic->setValue("TAG ID");
       pCharacteristic->notify();
-      delay(500);
-      pCharacteristic->setValue(tag_id);
+      delay(400);
+      pCharacteristic->setValue(idTag);
       pCharacteristic->notify();
       delay(500); 
 
     }else
       {
-        Serial.println("NO BLUETOOTH CONN");
-        digitalWrite(GPIO2_OUT, LOW);
+        Serial.println("Sem comunicação BLUETOOTH");
+        for(int i = 0; i < 10; i++)
+        {
+          digitalWrite(GPIO2_OUT, HIGH);
+          delay(100);
+          digitalWrite(GPIO2_OUT, LOW);
+          delay(100);
+        }
       }
 
 
-    //digitalWrite(GPIO2_OUT, LOW);
-    delay(2000);
+    
+    delay(500);
 }
