@@ -81,7 +81,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 void setup(void) {
   Serial.begin(115200);   // velocidade maior para ESP32
   //inicia NFC
-  Serial.println("NDEF Reader - ESP32");
+  Serial.println("NDEF Reader - WCOMPass-01");
   Wire.begin(4, 5);     // garante que SDA=21 ou 4, SCL=22 ou 5
   nfc.begin();
   //----------------------------------
@@ -89,7 +89,7 @@ void setup(void) {
 
   pinMode(GPIO2_OUT, OUTPUT);
   // Inicializa BLE
-  BLEDevice::init("ESP32_PROTOTIPO"); // Nome visível no iPhone
+  BLEDevice::init("WCOMPass-01"); // Nome visível no iPhone
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new MyServerCallbacks());
 
@@ -113,7 +113,7 @@ void setup(void) {
 
   // Inicia advertising
   pServer->getAdvertising()->start();
-  Serial.println("ESP32 BLE pronto! Procure por 'ESP32_PROTORIPO' no iPhone.");
+  Serial.println("WCOMPass-01 pronto! Procure por 'WCOMPass-01' no seu dispositivo.");
 
 
 
