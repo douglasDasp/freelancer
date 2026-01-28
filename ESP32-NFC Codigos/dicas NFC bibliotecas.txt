@@ -1,0 +1,73 @@
+
+
+A classe NfcTag é bem versátil. Quando você faz a leitura com o nfc.read(), o objeto resultante carrega não apenas a identificação, mas também o estado da memória e o formato dos dados da etiqueta.
+
+O que o tag.print() faz?
+Se você chamar tag.print(), ele não vai imprimir apenas o ID. O método print() dessa classe está programado para despejar no Monitor Serial uma visão detalhada da tag, incluindo:
+
+UID (Unique ID): O identificador único da tag (o que você provavelmente quer).
+
+Tag Type: O tipo da tecnologia (ex: MIFARE Classic, ISO 14443A).
+
+Conteúdo NDEF: Se houver mensagens gravadas (como um link ou texto), elas serão listadas.
+
+Veja como você faria para capturar o ID de forma limpa:
+
+if (nfc.tagPresent()) {
+    NfcTag tag = nfc.read();
+    
+    // Captura o UID formatado como String (ex: "04 67 A2 B1")
+    String idHex = tag.getUidString(); 
+    
+    Serial.print("ID da Tag detectada: ");
+    Serial.println(idHex);
+
+    if (idHex == "04 67 A2 B1") { 
+        Serial.println("Acesso Permitido!");
+    }
+}
+
+
+Aqui estão os métodos e propriedades mais importantes que você tem à disposição:
+
+1. Identificação Básica (O essencial)
+Estes são os métodos que você usará 90% do tempo para projetos de controle de acesso:
+
+getUidString(): Retorna o UID formatado como uma String (ex: "04 67 A2 B1"). É o mais prático para comparações simples.
+
+getUidLength(): Retorna o tamanho do UID em bytes (geralmente 4 ou 7 bytes).
+
+getUid(byte *uid, unsigned int uidLength): Copia os bytes brutos do UID para um array que você fornecer. Útil se você preferir trabalhar com binário em vez de texto.
+
+2. Informações de Hardware
+Para saber com que tipo de "etiqueta" você está lidando:
+
+getTagType(): Retorna uma String com o padrão da tag (ex: "Mifare Classic", "NFC Forum Type 2", etc).
+
+getIdentifier(): Semelhante ao UID, mas focado no identificador de protocolo.
+
+3. Manipulação de Dados (NDEF)
+Se a sua tag tiver dados gravados (como uma URL, um texto ou um comando Wi-Fi), você usará estes métodos:
+
+hasNdefMessage(): Retorna um booleano (true/false) indicando se a tag contém mensagens formatadas no padrão NDEF.
+
+getNdefMessage(): Retorna um objeto da classe NdefMessage. A partir daqui, você pode ler os registros específicos (records) dentro da tag.
+
+
+
+Exemplo Prático de Uso Avançado
+Se você quiser validar se uma tag é do tipo certo e se tem dados antes de agir:
+
+NfcTag tag = nfc.read();
+
+Serial.println("Tipo da Tag: " + tag.getTagType());
+
+if (tag.hasNdefMessage()) {
+    NdefMessage message = tag.getNdefMessage();
+    Serial.print("Esta tag possui ");
+    Serial.print(message.getRecordCount());
+    Serial.println(" registro(s) de dados.");
+} else {
+    Serial.println("Tag vazia ou sem formatação NDEF.");
+}
+

@@ -1,0 +1,34 @@
+Excelente escolha. O Bluetooth Low Energy (BLE) é ordens de grandeza mais eficiente que o Wi-Fi para o ESP32. Como você quer o menor tamanho com a melhor autonomia, o segredo não está na bateria, mas no gerenciamento de sono.
+
+Ao remover o Wi-Fi da jogada, seu maior inimigo deixa de ser o rádio e passa a ser o "consumo residual" da placa DevKit.
+
+
+2. Otimização para "Menor Tamanho"Para ter um dispositivo pequeno, recomendo usar uma bateria de Lítio-Polímero (LiPo) de formato "flat" (achotada).Opção Recomendada: LiPo 800mAh a 1000mAhDimensões: Aproximadamente $5\text{cm} \times 3\text{cm} \times 0.5\text{cm}$.Cálculo de Autonomia (Cenário Realista no DevKit):Corrente média em Deep Sleep no DevKit: $\approx 10\text{ mA}$ (devido ao regulador e conversor USB).$1000\text{ mAh} / 10\text{ mA} = \mathbf{100 \text{ horas (aprox. 4 dias)}}$.Opção "Hardcore" (Modificação de Hardware):Se você remover o LED de Power e o regulador de tensão original, o Deep Sleep cai para cerca de $0.5\text{ mA}$.$1000\text{ mAh} / 0.5\text{ mA} = \mathbf{2000 \text{ horas (aprox. 83 dias)}}$.
+
+
+3. Circuito de Alimentação Sugerido
+Para carregar a bateria e alimentar o circuito com segurança no menor espaço possível, utilize um módulo TP4056 com proteção:
+
+Bateria LiPo (3.7V) -> Conectada ao TP4056.
+
+Saída do TP4056 -> Conectada ao pino 3V3 do ESP32 (ignorando o regulador interno se a bateria estiver estabilizada em 3.3V via LDO externo) ou ao pino VIN/5V (menos eficiente).
+
+4. Plano de Ação para Código (Firmware)
+Para atingir essa autonomia, seu código deve seguir esta lógica:
+
+Deep Sleep Total: O ESP32 fica desligado.
+
+Wake-up Source: Use um botão físico ou o pino de interrupção (IRQ) do PN532 para acordar o ESP32.
+
+Leitura Rápida: Acorda -> Lê a Tag -> Armazena na memória Flash/SPIFFS -> Volta a dormir.
+
+Consulta BLE: Somente quando um botão de "Sync" for pressionado, o BLE é ativado para você ler os IDs pelo celular.
+
+Resumo do Hardware ideal:
+Bateria: LiPo 1000mAh (Equilíbrio perfeito entre volume e carga).
+
+Carregador: Módulo micro-USB TP4056 (Pequeno e barato).
+
+Regulador (Opcional): Um LDO de baixo consumo como o MCP1700-3302E para substituir o original da placa.
+
+Deseja que eu te ajude com o esquema de ligação entre o PN532 e o ESP32 usando o protocolo SPI (que é mais rápido e econômico que o I2C)?
