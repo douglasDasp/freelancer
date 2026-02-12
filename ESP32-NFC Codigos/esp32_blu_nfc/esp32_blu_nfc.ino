@@ -1,7 +1,7 @@
 /*
   Software de teste de Registro de ID de TAG e transferência por Bluetooth
   
-  Hardware: ESP32-DevKit REV01 ; Modulo NFC PN532 REV03 ; 
+  Hardware: ESP32-DevKit REV01 ; Modulo NFC PN532 REV03 ; c:\Users\dougl\OneDrive\Área de Trabalho\Freelas\2026\ESP32-NFC\ESP32-NFC Codigos\esp32_blu_nfc\esp32_blu_nfc_campo.ino
   
   IMPORTANTE SER o hardware especificado!!
 
@@ -21,8 +21,6 @@
   Autor: Douglas Poubel
   Versão: 1.0.2 -- bug de travamento por ausencia de modulo NFC resolvido
 
-
-#### TESTAR COM MODULO NFC REV 03
 */
 
 //NFC
@@ -79,6 +77,7 @@ class MyServerCallbacks: public BLEServerCallbacks {
     {
       deviceConnected = false;
       pCharacteristic->setValue(""); // limpar o buffer
+      pCharacteristic->notify();//necessario?
       Serial.println("Dispositivo desconectado!"); 
       needsRestartAdvertising = true;
     }
@@ -157,7 +156,7 @@ void setup(void) {
 }
 
 void loop(void) {
-    Serial.println("\Lendo... NFC tag\n");
+    //Serial.println("\Lendo... NFC tag\n");
     String idTag;
     // if (nfc.tagPresent()) 
     // {
@@ -183,10 +182,10 @@ void loop(void) {
           Serial.println("Reader ERROR");
           for(int i = 0; i < 10; i++)
           {
-             digitalWrite(GPIO2_OUT, HIGH);
-             delay(100);
-             digitalWrite(GPIO2_OUT, LOW);
-             delay(100);
+             //digitalWrite(GPIO2_OUT, HIGH);
+             delay(10);
+             //digitalWrite(GPIO2_OUT, LOW);
+             delay(10);
           }
           
           
@@ -199,7 +198,7 @@ void loop(void) {
       delay(100);
       pCharacteristic->setValue("TAG ID");
       pCharacteristic->notify();
-      delay(400);
+      delay(100);
       pCharacteristic->setValue(idTag);
       pCharacteristic->notify();
       delay(500); 
@@ -210,18 +209,18 @@ void loop(void) {
         Serial.println("Sem comunicação BLUETOOTH");
         if (needsRestartAdvertising) 
         {
-          delay(500); // para a stack BLE respirar
+          delay(100); // para a stack BLE respirar
           pServer->getAdvertising()->start();
           Serial.println("Advertising reiniciado...");
           needsRestartAdvertising = false;
         }
-        for(int i = 0; i < 10; i++)
-        {
-          digitalWrite(GPIO2_OUT, HIGH);
-          delay(100);
-          digitalWrite(GPIO2_OUT, LOW);
-          delay(100);
-        }
+        //for(int i = 0; i < 10; i++)
+        //{
+          //digitalWrite(GPIO2_OUT, HIGH);
+          //delay(100);
+          //digitalWrite(GPIO2_OUT, LOW);
+          //delay(100);
+        //}
       }
 
 
